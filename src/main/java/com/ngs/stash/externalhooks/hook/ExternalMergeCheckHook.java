@@ -212,7 +212,7 @@ public class ExternalMergeCheckHook
 
             boolean Accepted = process.waitFor() == 0;
             if (!Accepted) {
-                String detailedMsg = hookResponse;
+                String detailedMsg = hookResponse.replaceAll("(\r\n|\n)", "<br />");
                 context.getMergeRequest().veto(summaryMsg, detailedMsg);
             }
             return;

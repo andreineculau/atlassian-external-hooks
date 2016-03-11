@@ -50,7 +50,9 @@ public class ExternalMergeCheckHook
      * Call external executable as git hook.
      */
     @Override
-    public void check(RepositoryMergeRequestCheckContext context) {
+    public void check(
+        RepositoryMergeRequestCheckContext context
+    ) {
         PullRequest pr = context.getMergeRequest().getPullRequest();
         Repository repo = pr.getToRef().getRepository();
 
@@ -123,22 +125,37 @@ public class ExternalMergeCheckHook
             OutputStream output = process.getOutputStream();
 
             output.write((
-                          pr.getFromRef().getRepository().getSlug() + " " +
-                          pr.getFromRef().getLatestChangeset() + " " +
-                          pr.getToRef().getRepository().getSlug() + " " +
-                          pr.getToRef().getLatestChangeset() + "\n"
+                          pr.getFromRef().getLatestCommit() + " " +
+                          pr.getToRef().getLatestCommit() + " " +
+                          pr.getToRef().getDisplayId() + "\n"
                           ).getBytes("UTF-8"));
             output.close();
 
+            String hookResponse = "";
+            boolean trimmed = false;
             int data;
             int count = 0;
-            String response = "";
             while ((data = input.read()) >= 0) {
-                response += Character.toString((char)data);
+                if (count >= 65000) {
+                    if (!trimmed) {
+                        hookResponse += "\n";
+                        hookResponse += "Hook response exceeds 65K length limit.\n";
+                        hookResponse += "Further output will be trimmed.\n";
+                        trimmed = true;
+                    }
+                    continue;
+                }
+
+                String charToWrite = Character.toString((char)data);
+
+                count += charToWrite.getBytes("utf-8").length;
+
+                hookResponse += charToWrite;
             }
+
             boolean Accepted = process.waitFor() == 0;
             if (!Accepted) {
-                String detailedMsg = response;
+                String detailedMsg = hookResponse;
                 context.getMergeRequest().veto(summaryMsg, detailedMsg);
             }
             return;

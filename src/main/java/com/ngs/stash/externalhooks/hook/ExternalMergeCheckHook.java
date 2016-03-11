@@ -23,14 +23,14 @@ import java.nio.file.Files;
 
 import com.atlassian.bitbucket.auth.*;
 import com.atlassian.bitbucket.permission.*;
-import com.google.common.base.Predicate;
-import static com.google.common.base.Charsets.UTF_8;
-import static com.google.common.base.Joiner.on;
-import static com.google.common.base.Throwables.propagate;
-import static com.google.common.collect.Iterables.filter;
-import static com.google.common.collect.Iterables.transform;
-import static com.google.common.collect.Lists.newArrayList;
-import static com.google.common.collect.Ordering.usingToString;
+// import com.google.common.base.Predicate;
+// import static com.google.common.base.Charsets.UTF_8;
+// import static com.google.common.base.Joiner.on;
+// import static com.google.common.base.Throwables.propagate;
+// import static com.google.common.collect.Iterables.filter;
+// import static com.google.common.collect.Iterables.transform;
+// import static com.google.common.collect.Lists.newArrayList;
+// import static com.google.common.collect.Ordering.usingToString;
 import static com.ngs.stash.externalhooks.hook.ExternalMergeCheckHook.REPO_PROTOCOL.http;
 import static com.ngs.stash.externalhooks.hook.ExternalMergeCheckHook.REPO_PROTOCOL.ssh;
 
@@ -165,11 +165,11 @@ public class ExternalMergeCheckHook
         // env.put("PULL_REQUEST_USER_NAME", applicationUser.getName());
         // env.put("PULL_REQUEST_USER_SLUG", applicationUser.getSlug());
         env.put("PULL_REQUEST_TITLE", pr.getTitle());
-        env.put("PULL_REQUEST_REVIEWERS", iterableToString(transform(pr.getReviewers(), (p) -> p.getUser().getDisplayName())));
-        env.put("PULL_REQUEST_REVIEWERS_ID", iterableToString(transform(pr.getReviewers(), (p) -> Integer.toString(p.getUser().getId()))));
-        env.put("PULL_REQUEST_REVIEWERS_SLUG", iterableToString(transform(pr.getReviewers(), (p) -> p.getUser().getSlug())));
-        env.put("PULL_REQUEST_REVIEWERS_APPROVED_COUNT", Integer.toString(newArrayList(filter(pr.getReviewers(), isApproved)).size()));
-        env.put("PULL_REQUEST_PARTICIPANTS_APPROVED_COUNT", Integer.toString(newArrayList(filter(pr.getParticipants(), isApproved)).size()));
+        // env.put("PULL_REQUEST_REVIEWERS", iterableToString(transform(pr.getReviewers(), (p) -> p.getUser().getDisplayName())));
+        // env.put("PULL_REQUEST_REVIEWERS_ID", iterableToString(transform(pr.getReviewers(), (p) -> Integer.toString(p.getUser().getId()))));
+        // env.put("PULL_REQUEST_REVIEWERS_SLUG", iterableToString(transform(pr.getReviewers(), (p) -> p.getUser().getSlug())));
+        // env.put("PULL_REQUEST_REVIEWERS_APPROVED_COUNT", Integer.toString(newArrayList(filter(pr.getReviewers(), isApproved)).size()));
+        // env.put("PULL_REQUEST_PARTICIPANTS_APPROVED_COUNT", Integer.toString(newArrayList(filter(pr.getParticipants(), isApproved)).size()));
 
         String summaryMsg = "Merge request failed";
 
@@ -298,17 +298,17 @@ public class ExternalMergeCheckHook
         ssh, http
     }
 
-    private static final Predicate<PullRequestParticipant> isApproved = new Predicate<PullRequestParticipant>() {
-            @Override
-            public boolean apply(PullRequestParticipant input) {
-                return input.isApproved();
-            }
-        };
+    // private static final Predicate<PullRequestParticipant> isApproved = new Predicate<PullRequestParticipant>() {
+    //         @Override
+    //         public boolean apply(PullRequestParticipant input) {
+    //             return input.isApproved();
+    //         }
+    //     };
 
-    private static String iterableToString(Iterable<String> slist) {
-        List<String> sorted = usingToString().sortedCopy(slist);
-        return on(',').join(sorted);
-    }
+    // private static String iterableToString(Iterable<String> slist) {
+    //     List<String> sorted = usingToString().sortedCopy(slist);
+    //     return on(',').join(sorted);
+    // }
 
     private static String cloneUrlFromRepository(
         REPO_PROTOCOL protocol,

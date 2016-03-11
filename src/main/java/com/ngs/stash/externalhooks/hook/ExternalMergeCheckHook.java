@@ -182,9 +182,9 @@ public class ExternalMergeCheckHook
             OutputStream output = process.getOutputStream();
 
             output.write((
-                          pr.getFromRef().getLatestCommit() + " " +
                           pr.getToRef().getLatestCommit() + " " +
-                          pr.getToRef().getDisplayId() + "\n"
+                          pr.getFromRef().getLatestCommit() + " " +
+                          pr.getToRef().getId() + "\n"
                           ).getBytes("UTF-8"));
             output.close();
 

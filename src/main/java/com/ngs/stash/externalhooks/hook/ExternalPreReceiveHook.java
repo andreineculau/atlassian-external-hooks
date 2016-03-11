@@ -1,13 +1,13 @@
 package com.ngs.stash.externalhooks.hook;
 
-import com.atlassian.stash.hook.*;
-import com.atlassian.stash.hook.repository.*;
-import com.atlassian.stash.repository.*;
-import com.atlassian.stash.setting.*;
-import com.atlassian.stash.env.SystemProperties;
-import com.atlassian.stash.user.*;
-import com.atlassian.stash.server.*;
-import com.atlassian.stash.util.*;
+import com.atlassian.bitbucket.hook.*;
+import com.atlassian.bitbucket.hook.repository.*;
+import com.atlassian.bitbucket.repository.*;
+import com.atlassian.bitbucket.setting.*;
+import com.atlassian.bitbucket.env.SystemProperties;
+import com.atlassian.bitbucket.user.*;
+import com.atlassian.bitbucket.server.*;
+import com.atlassian.bitbucket.util.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -19,8 +19,10 @@ import java.util.List;
 import java.util.LinkedList;
 import java.util.Set;
 import java.nio.file.Files;
-import com.atlassian.stash.user.Permission;
-import com.atlassian.stash.user.PermissionService;
+
+import com.atlassian.bitbucket.auth.*;
+import com.atlassian.bitbucket.permission.*;
+
 
 public class ExternalPreReceiveHook
     implements PreReceiveRepositoryHook, RepositorySettingsValidator
@@ -28,13 +30,13 @@ public class ExternalPreReceiveHook
     private static final Logger log = LoggerFactory.getLogger(
         ExternalPreReceiveHook.class);
 
-    private StashAuthenticationContext authCtx;
+    private AuthenticationContext authCtx;
     private PermissionService permissions;
     private RepositoryService repoService;
     private ApplicationPropertiesService properties;
 
     public ExternalPreReceiveHook(
-        StashAuthenticationContext authenticationContext,
+        AuthenticationContext authenticationContext,
         PermissionService permissions,
         RepositoryService repoService,
         ApplicationPropertiesService properties
@@ -71,7 +73,7 @@ public class ExternalPreReceiveHook
             }
         }
 
-        StashUser currentUser = authCtx.getCurrentUser();
+        ApplicationUser currentUser = authCtx.getCurrentUser();
         ProcessBuilder pb = new ProcessBuilder(exe);
 
         Map<String, String> env = pb.environment();

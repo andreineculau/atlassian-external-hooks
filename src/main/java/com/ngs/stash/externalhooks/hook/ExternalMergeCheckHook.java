@@ -1,14 +1,14 @@
 package com.ngs.stash.externalhooks.hook;
 
-import com.atlassian.stash.hook.*;
-import com.atlassian.stash.hook.repository.*;
-import com.atlassian.stash.repository.*;
-import com.atlassian.stash.setting.*;
-import com.atlassian.stash.env.SystemProperties;
-import com.atlassian.stash.user.*;
-import com.atlassian.stash.server.*;
-import com.atlassian.stash.util.*;
-import com.atlassian.stash.pull.*;
+import com.atlassian.bitbucket.hook.*;
+import com.atlassian.bitbucket.hook.repository.*;
+import com.atlassian.bitbucket.repository.*;
+import com.atlassian.bitbucket.setting.*;
+import com.atlassian.bitbucket.env.SystemProperties;
+import com.atlassian.bitbucket.user.*;
+import com.atlassian.bitbucket.server.*;
+import com.atlassian.bitbucket.util.*;
+import com.atlassian.bitbucket.pull.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -20,10 +20,20 @@ import java.util.List;
 import java.util.LinkedList;
 import java.util.Set;
 import java.nio.file.Files;
-import com.atlassian.stash.user.Permission;
-import com.atlassian.stash.user.PermissionService;
 
-import com.ngs.stash.externalHooks.hook.ExternalMergeCheckHook.REPO_PROTOCOL.*;
+import com.atlassian.bitbucket.auth.*;
+import com.atlassian.bitbucket.permission.*;
+import com.google.common.base.Predicate;
+import static com.google.common.base.Charsets.UTF_8;
+import static com.google.common.base.Joiner.on;
+import static com.google.common.base.Throwables.propagate;
+import static com.google.common.collect.Iterables.filter;
+import static com.google.common.collect.Iterables.transform;
+import static com.google.common.collect.Lists.newArrayList;
+import static com.google.common.collect.Ordering.usingToString;
+import static com.ngs.stash.externalhooks.hook.ExternalMergeCheckHook.REPO_PROTOCOL.http;
+import static com.ngs.stash.externalhooks.hook.ExternalMergeCheckHook.REPO_PROTOCOL.ssh;
+
 
 public class ExternalMergeCheckHook
     implements RepositoryMergeRequestCheck, RepositorySettingsValidator
@@ -31,13 +41,13 @@ public class ExternalMergeCheckHook
     private static final Logger log = LoggerFactory.getLogger(
         ExternalMergeCheckHook.class);
 
-    private StashAuthenticationContext authCtx;
+    private AuthenticationContext authCtx;
     private PermissionService permissions;
     private RepositoryService repoService;
     private ApplicationPropertiesService properties;
 
     public ExternalMergeCheckHook(
-        StashAuthenticationContext authenticationContext,
+        AuthenticationContext authenticationContext,
         PermissionService permissions,
         RepositoryService repoService,
         ApplicationPropertiesService properties
@@ -73,7 +83,7 @@ public class ExternalMergeCheckHook
             }
         }
 
-        StashUser currentUser = authCtx.getCurrentUser();
+        ApplicationUser currentUser = authCtx.getCurrentUser();
         ProcessBuilder pb = new ProcessBuilder(exe);
 
         Map<String, String> env = pb.environment();
@@ -129,7 +139,7 @@ public class ExternalMergeCheckHook
         env.put("PULL_REQUEST_FROM_SSH_CLONE_URL", cloneUrlFromRepository(ssh, pr.getFromRef().getRepository(), repoService));
         env.put("PULL_REQUEST_FROM_HTTP_CLONE_URL", cloneUrlFromRepository(http, pr.getFromRef().getRepository(), repoService));
         // env.put("PULL_REQUEST_ACTION", prnfbPullRequestAction.getName());
-        env.put("PULL_REQUEST_URL", getPullRequestUrl(properties, pullRequest));
+        env.put("PULL_REQUEST_URL", getPullRequestUrl(properties, pr));
         env.put("PULL_REQUEST_ID", pr.getId() + "");
         env.put("PULL_REQUEST_VERSION", pr.getVersion() + "");
         env.put("PULL_REQUEST_AUTHOR_ID", pr.getAuthor().getUser().getId() + "");
@@ -147,8 +157,8 @@ public class ExternalMergeCheckHook
         env.put("PULL_REQUEST_TO_REPO_SLUG", pr.getToRef().getRepository().getSlug() + "");
         env.put("PULL_REQUEST_TO_SSH_CLONE_URL", cloneUrlFromRepository(ssh, pr.getToRef().getRepository(), repoService));
         env.put("PULL_REQUEST_TO_HTTP_CLONE_URL", cloneUrlFromRepository(http, pr.getToRef().getRepository(), repoService));
-        env.put("PULL_REQUEST_COMMENT_TEXT", getOrEmpty(variables, PULL_REQUEST_COMMENT_TEXT));
-        env.put("PULL_REQUEST_MERGE_COMMIT", getOrEmpty(variables, PULL_REQUEST_MERGE_COMMIT));
+        // env.put("PULL_REQUEST_COMMENT_TEXT", getOrEmpty(variables, PULL_REQUEST_COMMENT_TEXT));
+        // env.put("PULL_REQUEST_MERGE_COMMIT", getOrEmpty(variables, PULL_REQUEST_MERGE_COMMIT));
         // env.put("PULL_REQUEST_USER_DISPLAY_NAME", applicationUser.getDisplayName());
         // env.put("PULL_REQUEST_USER_EMAIL_ADDRESS", applicationUser.getEmailAddress());
         // env.put("PULL_REQUEST_USER_ID", applicationUser.getId() + "");
@@ -287,6 +297,13 @@ public class ExternalMergeCheckHook
     public enum REPO_PROTOCOL {
         ssh, http
     }
+
+    private static final Predicate<PullRequestParticipant> isApproved = new Predicate<PullRequestParticipant>() {
+            @Override
+            public boolean apply(PullRequestParticipant input) {
+                return input.isApproved();
+            }
+        };
 
     private static String iterableToString(Iterable<String> slist) {
         List<String> sorted = usingToString().sortedCopy(slist);

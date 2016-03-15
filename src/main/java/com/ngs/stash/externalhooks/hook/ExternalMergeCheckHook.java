@@ -212,7 +212,9 @@ public class ExternalMergeCheckHook
 
             boolean Accepted = process.waitFor() == 0;
             if (!Accepted) {
-                String detailedMsg = hookResponse.replaceAll("(\r\n|\n)", "<br />");
+                String prePrefix = "<pre style=\"overflow: auto; white-space: nowrap;\">";
+                String preSuffix = "</pre>";
+                String detailedMsg = prePrefix + hookResponse.replaceAll("(\r\n|\n)", "<br />") + preSuffix;
                 context.getMergeRequest().veto(summaryMsg, detailedMsg);
             }
             return;
